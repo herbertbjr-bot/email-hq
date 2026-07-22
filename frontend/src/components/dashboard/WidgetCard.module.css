@@ -1,0 +1,83 @@
+.card {
+  background: var(--bg-secondary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  transition:
+    box-shadow 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.card:hover {
+  box-shadow: var(--shadow-md);
+}
+
+.editing {
+  border-color: var(--accent-color);
+  outline: 2px dashed color-mix(in srgb, var(--accent-color) 35%, transparent);
+  outline-offset: 2px;
+}
+
+.header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 16px;
+  border-bottom: var(--border-width) solid var(--border-color);
+}
+
+.titleGroup {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--text-secondary);
+}
+
+.grip {
+  cursor: grab;
+  color: var(--text-secondary);
+}
+
+.title {
+  margin: 0;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  letter-spacing: 0.01em;
+}
+
+.controls {
+  display: flex;
+  gap: 2px;
+}
+
+.controlButton {
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-sm);
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.controlButton:hover:not(:disabled) {
+  background: var(--accent-soft);
+  color: var(--accent-color);
+}
+
+.controlButton:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.body {
+  padding: 16px;
+  flex: 1;
+}

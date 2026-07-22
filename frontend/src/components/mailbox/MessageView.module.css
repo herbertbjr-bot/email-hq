@@ -1,0 +1,74 @@
+.wrap {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 20px 24px;
+  overflow-y: auto;
+}
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding-bottom: 16px;
+  border-bottom: var(--border-width) solid var(--border-color);
+}
+
+.subject {
+  margin: 0;
+  font-size: 1.25rem;
+}
+
+.meta {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.8125rem;
+  color: var(--text-secondary);
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.aiRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.body {
+  flex: 1;
+}
+
+.bodyText {
+  white-space: pre-wrap;
+  word-break: break-word;
+  font-family: inherit;
+  font-size: 0.875rem;
+  line-height: 1.6;
+  margin: 0;
+}
+
+.attachments {
+  margin-top: 20px;
+  padding-top: 16px;
+  border-top: var(--border-width) solid var(--border-color);
+  font-size: 0.8125rem;
+}
+
+.attachmentsLabel {
+  font-weight: 700;
+  color: var(--text-secondary);
+  text-transform: uppercase;
+  font-size: 0.6875rem;
+  letter-spacing: 0.05em;
+}
+
+.attachments ul {
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.assistantButton {
+  align-self: flex-start;
+}

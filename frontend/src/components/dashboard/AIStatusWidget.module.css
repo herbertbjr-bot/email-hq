@@ -1,0 +1,43 @@
+.wrap {
+  display: flex;
+  gap: 10px;
+}
+
+.dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  margin-top: 4px;
+  flex-shrink: 0;
+}
+
+.live {
+  background: var(--success-color);
+  box-shadow: 0 0 0 4px color-mix(in srgb, var(--success-color) 18%, transparent);
+}
+
+.heuristic {
+  background: var(--text-secondary);
+}
+
+.headline {
+  margin: 0 0 4px;
+  font-size: 0.8125rem;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.detail {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.detail code {
+  background: var(--bg-primary);
+  border: var(--border-width) solid var(--border-color);
+  border-radius: 4px;
+  padding: 1px 4px;
+  font-size: 0.6875rem;
+}

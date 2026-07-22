@@ -1,0 +1,62 @@
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 24px;
+  border-bottom: var(--border-width) solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.folderTitle {
+  font-size: 1.125rem;
+  margin: 0;
+  text-transform: capitalize;
+}
+
+.accountLine {
+  margin: 2px 0 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+}
+
+.actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.aiBadge {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.aiBadgeLive {
+  border-color: color-mix(in srgb, var(--success-color) 40%, var(--border-color));
+  color: var(--success-color);
+}
+
+.assistantButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.assistantButton:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}

@@ -1,0 +1,39 @@
+.indicator {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.03em;
+}
+
+.indicator::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.low {
+  color: var(--text-secondary);
+  background: var(--bg-tertiary);
+}
+
+.normal {
+  color: var(--accent-color);
+  background: var(--accent-soft);
+}
+
+.high {
+  color: var(--warning-color);
+  background: color-mix(in srgb, var(--warning-color) 16%, var(--bg-secondary));
+}
+
+.urgent {
+  color: var(--danger-color);
+  background: color-mix(in srgb, var(--danger-color) 16%, var(--bg-secondary));
+}

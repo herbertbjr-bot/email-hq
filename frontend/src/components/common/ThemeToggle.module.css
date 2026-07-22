@@ -1,0 +1,23 @@
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.toggle:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.label {
+  min-width: 32px;
+  text-align: left;
+}
