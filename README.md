@@ -51,7 +51,8 @@ backend on port 8000 (see `vite.config.ts`).
 ## Deployment (Vercel + Neon)
 
 **Live**: https://email-hq.vercel.app - Vercel project `seed-level-technologies/email-hq`,
-database Neon project `email-hq` (`icy-wildflower-85510558`, `aws-us-east-1`).
+database Neon project `email-hq` (`icy-wildflower-85510558`, `aws-us-east-1`),
+source at https://github.com/herbertbjr-bot/email-hq.
 
 **Architecture**: one Vercel project serves both halves, configured by the
 root [`vercel.json`](vercel.json):
@@ -70,9 +71,11 @@ root [`vercel.json`](vercel.json):
   at Neon's **pooled** endpoint (hostname contains `-pooler`, routed through
   PgBouncer) so Postgres itself absorbs that connection churn.
 
-**Redeploying**: from the `Email HQ/` directory, `vercel --prod` builds and
-deploys both halves. There's no git integration set up here - the CLI
-uploads the local working tree directly (respecting `.vercelignore`).
+**Redeploying**: pushing to `master` on GitHub auto-deploys to production
+(the Vercel project is Git-connected via `vercel git connect`). You can also
+deploy directly from a local working tree without pushing first by running
+`vercel --prod` from the `Email HQ/` directory (respects `.vercelignore`) -
+useful for previewing uncommitted changes.
 
 **Environment variables** (set via `vercel env add <NAME> production`, then
 `vercel env pull` if you need to inspect them locally): `DATABASE_URL`
