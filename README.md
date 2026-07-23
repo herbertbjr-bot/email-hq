@@ -98,17 +98,33 @@ migrations automatically.
 
 Use the "+" button next to **Accounts** in the sidebar. The **Quick connect**
 row in the form (`frontend/src/components/accounts/providerPresets.ts`)
-one-click-fills IMAP/SMTP host and port for Gmail, Outlook/Microsoft 365,
-Yahoo Mail, AOL Mail, and iCloud Mail - pick a provider, and the username
-fields auto-fill from the email address too. All presets use STARTTLS on
-port 587 for SMTP to match what the backend supports.
+one-click-fills IMAP/SMTP host and port for Gmail, Yahoo Mail, AOL Mail, and
+iCloud Mail - pick a provider, and the username fields auto-fill from the
+email address too. All presets use STARTTLS on port 587 for SMTP to match
+what the backend supports.
 
-Most providers require an app-specific password (not your normal login
-password) once you have their host/port filled in - the form shows a hint
-and a link to the provider's app-password page after you pick one. For
-providers not in the quick-connect list, fill in the IMAP/SMTP fields
-manually - your provider's help docs will have the host/port/security
-settings.
+**Almost all of these require an app-specific password, not your normal
+login password** - IMAP/SMTP login with your regular password will fail
+with an authentication error even if the host/port are correct. Each preset
+shows a hint plus a direct link to that provider's official app-password
+page once you pick it. Links point at each provider's own documentation
+(help.yahoo.com, help.aol.com, Google/Apple account pages), verified
+against their current published pages - not third-party guides.
+
+**Outlook / Microsoft 365 is not supported** for IMAP/SMTP login in this
+app: Microsoft has fully and permanently disabled Basic Authentication
+(including app passwords) for POP/IMAP/SMTP AUTH across Exchange Online and
+Outlook.com. There is no password of any kind that makes it work anymore -
+connecting would require implementing OAuth 2.0, which this app doesn't do.
+The Outlook preset button explains this rather than filling in settings
+that can't work.
+
+Before saving, click **Test connection** to verify your IMAP and SMTP
+credentials against the real server - it calls `POST /api/accounts/test-connection`
+(`backend/app/api/routes/accounts.py`), which tries the login without
+persisting anything, and reports each protocol's real error message (e.g.
+"AUTHENTICATIONFAILED" almost always means you need an app password, not
+your account password).
 
 Credentials are encrypted at rest with Fernet (`CREDENTIAL_ENCRYPTION_KEY`)
 and are only decrypted in-memory for the duration of a single IMAP/SMTP

@@ -153,6 +153,21 @@
   color: var(--accent-color);
 }
 
+.providerButtonUnavailable {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--text-secondary);
+  opacity: 0.75;
+}
+
+.providerButtonUnavailable.providerButtonActive {
+  border-color: var(--warning-color);
+  background: color-mix(in srgb, var(--warning-color) 14%, var(--bg-secondary));
+  color: var(--warning-color);
+  opacity: 1;
+}
+
 .providerHint {
   margin: 0;
   font-size: 0.75rem;
@@ -162,6 +177,49 @@
 
 .providerHint a {
   color: var(--accent-color);
+}
+
+.providerHintWarning {
+  color: var(--warning-color);
+}
+
+.providerHintWarning a {
+  color: var(--warning-color);
+  text-decoration: underline;
+}
+
+.testRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.testResult {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  width: 100%;
+}
+
+.testLine {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-size: 0.75rem;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  word-break: break-word;
+}
+
+.testOk {
+  color: var(--success-color);
+  background: color-mix(in srgb, var(--success-color) 14%, var(--bg-primary));
+}
+
+.testFail {
+  color: var(--danger-color);
+  background: color-mix(in srgb, var(--danger-color) 14%, var(--bg-primary));
 }
 
 .sectionLabel {

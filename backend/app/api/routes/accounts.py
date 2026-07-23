@@ -6,7 +6,13 @@ from app.api.deps import get_account_or_404
 from app.core.security import encrypt_secret
 from app.db.database import get_db
 from app.models.account import EmailAccount
-from app.schemas.account import ConnectionTestResult, EmailAccountCreate, EmailAccountOut, EmailAccountUpdate
+from app.schemas.account import (
+    ConnectionTestRequest,
+    ConnectionTestResult,
+    EmailAccountCreate,
+    EmailAccountOut,
+    EmailAccountUpdate,
+)
 from app.services import imap_service, smtp_service
 
 router = APIRouter(prefix="/accounts", tags=["accounts"])
@@ -44,6 +50,28 @@ async def create_account(payload: EmailAccountCreate, db: AsyncSession = Depends
     await db.commit()
     await db.refresh(account)
     return account
+
+
+@router.post("/test-connection", response_model=ConnectionTestResult)
+async def test_connection_before_save(payload: ConnectionTestRequest) -> ConnectionTestResult:
+    """Tests IMAP/SMTP credentials without persisting anything - lets the Add
+    Account form verify a login works before the user commits to saving it.
+    """
+    probe = EmailAccount(
+        imap_host=payload.imap_host,
+        imap_port=payload.imap_port,
+        imap_use_ssl=payload.imap_use_ssl,
+        imap_username=payload.imap_username,
+        imap_password_encrypted=encrypt_secret(payload.imap_password),
+        smtp_host=payload.smtp_host,
+        smtp_port=payload.smtp_port,
+        smtp_use_tls=payload.smtp_use_tls,
+        smtp_username=payload.smtp_username,
+        smtp_password_encrypted=encrypt_secret(payload.smtp_password),
+    )
+    imap_ok, imap_error = await imap_service.test_connection(probe)
+    smtp_ok, smtp_error = await smtp_service.test_connection(probe)
+    return ConnectionTestResult(imap_ok=imap_ok, smtp_ok=smtp_ok, imap_error=imap_error, smtp_error=smtp_error)
 
 
 @router.get("/{account_id}", response_model=EmailAccountOut)

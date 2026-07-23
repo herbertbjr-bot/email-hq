@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
+import type { ConnectionTestResult } from "../../api/accounts";
 import { accountsApi } from "../../api/accounts";
 import { useToast } from "../../context/ToastContext";
 import { Icon } from "../../icons/IconRegistry";
@@ -33,12 +34,18 @@ export function AccountForm({ onClose, onSaved }: { onClose: () => void; onSaved
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
+  const [testing, setTesting] = useState(false);
+  const [testResult, setTestResult] = useState<ConnectionTestResult | null>(null);
 
-  const update = <K extends keyof EmailAccountFormValues>(key: K, value: EmailAccountFormValues[K]) =>
+  const update = <K extends keyof EmailAccountFormValues>(key: K, value: EmailAccountFormValues[K]) => {
     setValues((prev) => ({ ...prev, [key]: value }));
+    setTestResult(null);
+  };
 
   const applyProvider = (preset: ProviderPreset) => {
     setSelectedProviderId(preset.id);
+    setTestResult(null);
+    if (preset.unavailable) return;
     setValues((prev) => ({
       ...prev,
       imap_host: preset.imapHost,
@@ -53,6 +60,38 @@ export function AccountForm({ onClose, onSaved }: { onClose: () => void; onSaved
   };
 
   const selectedProvider = PROVIDER_PRESETS.find((p) => p.id === selectedProviderId) ?? null;
+
+  const handleTestConnection = async () => {
+    setTesting(true);
+    setTestResult(null);
+    try {
+      const result = await accountsApi.testConnectionFields({
+        imap_host: values.imap_host,
+        imap_port: values.imap_port,
+        imap_use_ssl: values.imap_use_ssl,
+        imap_username: values.imap_username,
+        imap_password: values.imap_password,
+        smtp_host: values.smtp_host,
+        smtp_port: values.smtp_port,
+        smtp_use_tls: values.smtp_use_tls,
+        smtp_username: values.smtp_username,
+        smtp_password: values.smtp_password,
+      });
+      setTestResult(result);
+    } catch (err) {
+      setTestResult({
+        imap_ok: false,
+        smtp_ok: false,
+        imap_error: err instanceof Error ? err.message : "Test failed",
+        smtp_error: null,
+      });
+    } finally {
+      setTesting(false);
+    }
+  };
+
+  const canTest =
+    values.imap_host && values.imap_username && values.imap_password && values.smtp_host && values.smtp_username && values.smtp_password;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -129,21 +168,23 @@ export function AccountForm({ onClose, onSaved }: { onClose: () => void; onSaved
                   <button
                     key={preset.id}
                     type="button"
-                    className={`${styles.providerButton} ${selectedProviderId === preset.id ? styles.providerButtonActive : ""}`}
+                    className={`${styles.providerButton} ${selectedProviderId === preset.id ? styles.providerButtonActive : ""} ${preset.unavailable ? styles.providerButtonUnavailable : ""}`}
                     onClick={() => applyProvider(preset)}
+                    title={preset.unavailable ? "Not supported - click for details" : undefined}
                   >
                     {preset.name}
+                    {preset.unavailable && <Icon name="alert" size={11} />}
                   </button>
                 ))}
               </div>
               {selectedProvider && (
-                <p className={styles.providerHint}>
+                <p className={`${styles.providerHint} ${selectedProvider.unavailable ? styles.providerHintWarning : ""}`}>
                   {selectedProvider.hint}
                   {selectedProvider.helpUrl && (
                     <>
                       {" "}
                       <a href={selectedProvider.helpUrl} target="_blank" rel="noopener noreferrer">
-                        Manage app passwords
+                        {selectedProvider.helpLabel ?? "Learn more"}
                       </a>
                       .
                     </>
@@ -225,6 +266,24 @@ export function AccountForm({ onClose, onSaved }: { onClose: () => void; onSaved
                 onChange={(e) => update("smtp_password", e.target.value)}
               />
             </label>
+
+            <div className={`${styles.fieldWide} ${styles.testRow}`}>
+              <Button type="button" variant="secondary" onClick={handleTestConnection} disabled={!canTest || testing}>
+                {testing ? "Testing..." : "Test connection"}
+              </Button>
+              {testResult && (
+                <div className={styles.testResult}>
+                  <span className={`${styles.testLine} ${testResult.imap_ok ? styles.testOk : styles.testFail}`}>
+                    <Icon name={testResult.imap_ok ? "check" : "alert"} size={13} />
+                    IMAP {testResult.imap_ok ? "connected" : testResult.imap_error}
+                  </span>
+                  <span className={`${styles.testLine} ${testResult.smtp_ok ? styles.testOk : styles.testFail}`}>
+                    <Icon name={testResult.smtp_ok ? "check" : "alert"} size={13} />
+                    SMTP {testResult.smtp_ok ? "connected" : testResult.smtp_error}
+                  </span>
+                </div>
+              )}
+            </div>
 
             <label className={styles.checkboxField}>
               <input

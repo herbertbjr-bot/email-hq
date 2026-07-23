@@ -60,3 +60,19 @@ class ConnectionTestResult(BaseModel):
     smtp_ok: bool
     imap_error: str | None = None
     smtp_error: str | None = None
+
+
+class ConnectionTestRequest(BaseModel):
+    """IMAP/SMTP fields only - used to test credentials before an account is saved."""
+
+    imap_host: str
+    imap_port: int = 993
+    imap_use_ssl: bool = True
+    imap_username: str
+    imap_password: str = Field(min_length=1)
+
+    smtp_host: str
+    smtp_port: int = 587
+    smtp_use_tls: bool = True
+    smtp_username: str
+    smtp_password: str = Field(min_length=1)
