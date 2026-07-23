@@ -211,6 +211,34 @@ Click **Customize** to show/hide widgets and reorder them; the layout persists
 to `localStorage` (`emailhq.dashboard.layout.v1`). Use the sidebar's
 Dashboard/Mail switcher to jump into the full mail view.
 
+## Smart widgets
+
+Below the built-in widgets, **Add smart widget** opens a form
+(`frontend/src/components/dashboard/SmartWidgetEditor.tsx`) to build an
+unlimited number of your own live saved searches - each one a real
+server-side query, not a filter over a fixed message set. A widget is any
+combination of:
+
+- **Account and folder** - scopes the search to one mailbox/folder.
+- **Text, subject, from, to** - map directly to IMAP `SEARCH` criteria
+  (`TEXT`, `SUBJECT`, `FROM`, `TO`) on the backend, ANDed together
+  (`_build_search_criteria` / `MessageQuery` in
+  `backend/app/services/imap_service.py`).
+- **Date range** - `SINCE`/`BEFORE`, formatted as IMAP's `DD-Mon-YYYY`.
+- **Unread / Flagged** - `UNSEEN`/`FLAGGED`.
+- **Sort** - Newest/Oldest first.
+- **Result limit** - 5, 10, or 20 messages shown before a "+N more match
+  this search" hint.
+
+Each widget (`frontend/src/components/dashboard/SmartWidget.tsx`) fetches
+independently via `mailApi.messages`, shows a human-readable summary of its
+active filters (e.g. `billing@vendor.com · unread · since 2026-01-01`), and
+opens straight into Mail on the right account/folder/message when you click
+a result. Click the gear icon on any widget to edit or delete it. Widgets
+persist to `localStorage` (`emailhq.smart-widgets.v1`,
+`frontend/src/hooks/useSmartWidgets.ts`) - same versioned-key pattern as the
+dashboard layout, theme, and icon-pack preferences.
+
 ## Appearance: themes, icon packs, and skinning
 
 Click **Customize appearance** at the bottom of the sidebar (gear icon) to open

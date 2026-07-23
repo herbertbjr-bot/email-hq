@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { useAccountContext } from "../../context/AccountContext";
 import { DASHBOARD_WIDGETS, useDashboardLayout } from "../../hooks/useDashboardLayout";
+import type { SmartWidgetConfig } from "../../hooks/useSmartWidgets";
+import { useSmartWidgets } from "../../hooks/useSmartWidgets";
 import { Icon } from "../../icons/IconRegistry";
 import { Button } from "../common/Button";
 import { AccountsOverviewWidget } from "./AccountsOverviewWidget";
@@ -9,17 +11,24 @@ import styles from "./DashboardView.module.css";
 import { PriorityInboxWidget } from "./PriorityInboxWidget";
 import { QuickComposeWidget } from "./QuickComposeWidget";
 import { SmartTagsWidget } from "./SmartTagsWidget";
+import { SmartWidget } from "./SmartWidget";
+import { SmartWidgetEditor } from "./SmartWidgetEditor";
 
 export function DashboardView({
   onOpenMail,
   onOpenMessage,
 }: {
   onOpenMail: (accountId: string) => void;
-  onOpenMessage: (uid: string) => void;
+  onOpenMessage: (uid: string, accountId?: string, folder?: string) => void;
 }) {
   const { selectedAccount } = useAccountContext();
   const { orderedWidgets, visibleWidgets, hidden, toggleVisible, move, reset } = useDashboardLayout();
+  const { widgets: smartWidgets, addWidget, updateWidget, removeWidget } = useSmartWidgets();
   const [editMode, setEditMode] = useState(false);
+  const [editorState, setEditorState] = useState<"closed" | "new" | string>("closed");
+
+  const editingWidget: SmartWidgetConfig | undefined =
+    editorState !== "closed" && editorState !== "new" ? smartWidgets.find((w) => w.id === editorState) : undefined;
 
   const renderWidget = (id: string) => {
     const index = orderedWidgets.findIndex((w) => w.id === id);
@@ -122,6 +131,60 @@ export function DashboardView({
           </div>
         )}
       </div>
+
+      <div className={styles.smartHeader}>
+        <div>
+          <h2 className={styles.smartTitle}>Smart widgets</h2>
+          <p className={styles.subtitle}>Your own saved searches - any combination of subject, from, to, date, read/flagged status.</p>
+        </div>
+        <Button variant="secondary" onClick={() => setEditorState("new")}>
+          <Icon name="plus" size={14} />
+          Add smart widget
+        </Button>
+      </div>
+
+      {smartWidgets.length === 0 ? (
+        <div className={styles.emptyGrid}>
+          <p>No smart widgets yet - create one to track any search on your dashboard.</p>
+          <Button variant="secondary" onClick={() => setEditorState("new")}>
+            Add smart widget
+          </Button>
+        </div>
+      ) : (
+        <div className={styles.grid}>
+          {smartWidgets.map((widget) => (
+            <SmartWidget
+              key={widget.id}
+              config={widget}
+              onOpenMessage={(uid, accountId, folder) => onOpenMessage(uid, accountId, folder)}
+              onEdit={() => setEditorState(widget.id)}
+            />
+          ))}
+        </div>
+      )}
+
+      {editorState !== "closed" && (
+        <SmartWidgetEditor
+          initial={editingWidget}
+          onClose={() => setEditorState("closed")}
+          onSave={(config) => {
+            if (editingWidget) {
+              updateWidget(editingWidget.id, config);
+            } else {
+              addWidget(config);
+            }
+            setEditorState("closed");
+          }}
+          onDelete={
+            editingWidget
+              ? () => {
+                  removeWidget(editingWidget.id);
+                  setEditorState("closed");
+                }
+              : undefined
+          }
+        />
+      )}
     </div>
   );
 }

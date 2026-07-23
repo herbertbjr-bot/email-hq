@@ -122,6 +122,21 @@
   align-items: start;
 }
 
+.smartHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 32px 0 16px;
+  padding-top: 24px;
+  border-top: var(--border-width) solid var(--border-color);
+}
+
+.smartTitle {
+  margin: 0;
+  font-size: 1.0625rem;
+}
+
 .emptyGrid {
   grid-column: 1 / -1;
   display: flex;

@@ -12,7 +12,8 @@ import asyncio
 import email
 import imaplib
 import logging
-from datetime import datetime
+from dataclasses import dataclass
+from datetime import date, datetime
 from email.header import decode_header, make_header
 from email.message import Message
 from email.utils import parsedate_to_datetime
@@ -39,6 +40,24 @@ _DISPLAY_NAME_OVERRIDES = {
 _TRASH_NAMES = {"trash", "deleted items", "deleted messages", "bin", "junk"}
 
 SortOrder = str  # "date_desc" | "date_asc"
+
+
+@dataclass
+class MessageQuery:
+    """A saved-search shape: every field a dashboard "smart widget" (or the
+    Mail search toolbar) can filter/sort on. All filters combine with AND -
+    e.g. from_address + unread_only + date_from together mean "unread from
+    this sender since this date"."""
+
+    text: str | None = None
+    subject: str | None = None
+    from_address: str | None = None
+    to_address: str | None = None
+    unread_only: bool = False
+    flagged_only: bool = False
+    date_from: date | None = None
+    date_to: date | None = None
+    sort: SortOrder = "date_desc"
 
 
 class ImapError(Exception):
@@ -93,20 +112,36 @@ def _quote_search_term(term: str) -> str:
     return f'"{escaped}"'
 
 
-def _build_search_criteria(query: str | None, unread_only: bool, flagged_only: bool) -> list[str]:
+def _format_imap_date(value: date) -> str:
+    return value.strftime("%d-%b-%Y")
+
+
+def _build_search_criteria(query: MessageQuery) -> list[str]:
     """Builds an IMAP SEARCH criteria list. Criteria are implicitly ANDed by
-    the IMAP protocol when passed as separate tokens, so combining UNSEEN,
-    FLAGGED, and a TEXT search narrows on all of them at once."""
+    the IMAP protocol when passed as separate tokens, so combining e.g.
+    UNSEEN + FROM + SINCE narrows on all of them at once - this is what
+    lets a dashboard "smart widget" express something like "unread from
+    Jane since last Monday" as one search rather than fetch-then-filter."""
     criteria: list[str] = []
-    if unread_only:
+    if query.unread_only:
         criteria.append("UNSEEN")
-    if flagged_only:
+    if query.flagged_only:
         criteria.append("FLAGGED")
-    if query and query.strip():
+    if query.subject and query.subject.strip():
+        criteria += ["SUBJECT", _quote_search_term(query.subject.strip())]
+    if query.from_address and query.from_address.strip():
+        criteria += ["FROM", _quote_search_term(query.from_address.strip())]
+    if query.to_address and query.to_address.strip():
+        criteria += ["TO", _quote_search_term(query.to_address.strip())]
+    if query.date_from:
+        criteria += ["SINCE", _format_imap_date(query.date_from)]
+    if query.date_to:
+        criteria += ["BEFORE", _format_imap_date(query.date_to)]
+    if query.text and query.text.strip():
         # TEXT searches headers (subject, from, to) and the body in one pass -
-        # good enough for a single smart search box rather than separate
-        # subject/from/body fields.
-        criteria += ["TEXT", _quote_search_term(query.strip())]
+        # a broad catch-all, complementary to the field-specific criteria
+        # above rather than a replacement for them.
+        criteria += ["TEXT", _quote_search_term(query.text.strip())]
     return criteria or ["ALL"]
 
 
@@ -237,10 +272,7 @@ def _sync_list_messages(
     folder: str,
     limit: int,
     offset: int,
-    query: str | None,
-    unread_only: bool,
-    flagged_only: bool,
-    sort: SortOrder,
+    query: MessageQuery,
 ) -> MessageListResponse:
     conn = _connect(account)
     try:
@@ -248,7 +280,7 @@ def _sync_list_messages(
         if status != "OK":
             raise ImapError(f"Could not open folder '{folder}'")
 
-        criteria = _build_search_criteria(query, unread_only, flagged_only)
+        criteria = _build_search_criteria(query)
         status, search_data = conn.uid("search", None, *criteria)
         if status != "OK":
             raise ImapError("IMAP search failed")
@@ -258,7 +290,7 @@ def _sync_list_messages(
         # UIDs are monotonically increasing on essentially every IMAP server,
         # so UID order is a reliable (and cheap - no extra round trip) proxy
         # for date order without needing to fetch/parse dates for every match.
-        if sort != "date_asc":
+        if query.sort != "date_asc":
             all_uids.reverse()
         page_uids = all_uids[offset : offset + limit]
 
@@ -390,14 +422,9 @@ async def list_messages(
     folder: str,
     limit: int = 50,
     offset: int = 0,
-    query: str | None = None,
-    unread_only: bool = False,
-    flagged_only: bool = False,
-    sort: SortOrder = "date_desc",
+    query: MessageQuery | None = None,
 ) -> MessageListResponse:
-    return await asyncio.to_thread(
-        _sync_list_messages, account, folder, limit, offset, query, unread_only, flagged_only, sort
-    )
+    return await asyncio.to_thread(_sync_list_messages, account, folder, limit, offset, query or MessageQuery())
 
 
 async def get_message(account: EmailAccount, folder: str, uid: str) -> MessageDetail:

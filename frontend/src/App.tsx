@@ -46,8 +46,9 @@ function AppShell() {
     setView("mail");
   };
 
-  const openMessage = (uid: string) => {
-    selectFolder("INBOX");
+  const openMessage = (uid: string, accountId?: string, folder?: string) => {
+    if (accountId) selectAccount(accountId);
+    selectFolder(folder ?? "INBOX");
     setSelectedUid(uid);
     setView("mail");
   };

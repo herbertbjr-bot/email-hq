@@ -6,7 +6,14 @@ export type MailSort = "date_desc" | "date_asc";
 export interface MessageListParams {
   limit?: number;
   offset?: number;
+  /** Broad text search across subject/from/to/body (IMAP TEXT). */
   q?: string;
+  /** Field-specific criteria - combine freely with `q` and each other. */
+  subject?: string;
+  fromAddress?: string;
+  toAddress?: string;
+  dateFrom?: string; // "YYYY-MM-DD"
+  dateTo?: string; // "YYYY-MM-DD"
   unreadOnly?: boolean;
   flaggedOnly?: boolean;
   sort?: MailSort;
@@ -17,6 +24,11 @@ function buildQuery(params: MessageListParams): string {
   search.set("limit", String(params.limit ?? 50));
   search.set("offset", String(params.offset ?? 0));
   if (params.q) search.set("q", params.q);
+  if (params.subject) search.set("subject", params.subject);
+  if (params.fromAddress) search.set("from_address", params.fromAddress);
+  if (params.toAddress) search.set("to_address", params.toAddress);
+  if (params.dateFrom) search.set("date_from", params.dateFrom);
+  if (params.dateTo) search.set("date_to", params.dateTo);
   if (params.unreadOnly) search.set("unread_only", "true");
   if (params.flaggedOnly) search.set("flagged_only", "true");
   if (params.sort) search.set("sort", params.sort);

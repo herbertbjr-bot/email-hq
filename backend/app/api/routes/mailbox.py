@@ -1,3 +1,4 @@
+from datetime import date
 from typing import Literal
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
@@ -13,7 +14,7 @@ from app.schemas.email import (
     SendMessageRequest,
 )
 from app.services import imap_service, smtp_service
-from app.services.imap_service import ImapError
+from app.services.imap_service import ImapError, MessageQuery
 from app.services.smtp_service import SmtpError
 
 router = APIRouter(prefix="/accounts/{account_id}/mail", tags=["mail"])
@@ -33,22 +34,29 @@ async def list_messages(
     account: EmailAccount = Depends(get_account_or_404),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
-    q: str | None = Query(default=None, max_length=200, description="Full-text search (subject/from/body)"),
+    q: str | None = Query(default=None, max_length=200, description="Full-text search (subject/from/to/body)"),
+    subject: str | None = Query(default=None, max_length=200),
+    from_address: str | None = Query(default=None, max_length=200),
+    to_address: str | None = Query(default=None, max_length=200),
+    date_from: date | None = Query(default=None, description="Only messages on/after this date"),
+    date_to: date | None = Query(default=None, description="Only messages before this date"),
     unread_only: bool = Query(default=False),
     flagged_only: bool = Query(default=False),
     sort: Literal["date_desc", "date_asc"] = Query(default="date_desc"),
 ) -> MessageListResponse:
+    query = MessageQuery(
+        text=q,
+        subject=subject,
+        from_address=from_address,
+        to_address=to_address,
+        unread_only=unread_only,
+        flagged_only=flagged_only,
+        date_from=date_from,
+        date_to=date_to,
+        sort=sort,
+    )
     try:
-        return await imap_service.list_messages(
-            account,
-            folder,
-            limit=limit,
-            offset=offset,
-            query=q,
-            unread_only=unread_only,
-            flagged_only=flagged_only,
-            sort=sort,
-        )
+        return await imap_service.list_messages(account, folder, limit=limit, offset=offset, query=query)
     except ImapError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
