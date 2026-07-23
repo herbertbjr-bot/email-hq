@@ -99,6 +99,22 @@
   outline-offset: -1px;
 }
 
+.fieldHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.ccBccToggle {
+  background: transparent;
+  border: none;
+  color: var(--accent-color);
+  font-size: 0.6875rem;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
 .error {
   color: var(--danger-color);
   font-size: 0.8125rem;

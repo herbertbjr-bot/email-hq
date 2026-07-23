@@ -1,0 +1,130 @@
+.toolbar {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 10px 12px;
+  border-bottom: var(--border-width) solid var(--border-color);
+  background: var(--bg-secondary);
+}
+
+.searchBox {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 10px;
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-primary);
+}
+
+.searchIcon {
+  color: var(--text-secondary);
+  flex-shrink: 0;
+}
+
+.searchInput {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-primary);
+  font-size: 0.8125rem;
+  outline: none;
+}
+
+.clearButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.clearButton:hover {
+  color: var(--text-primary);
+}
+
+.controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 4px 10px;
+  border-radius: 999px;
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chip:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.chipActive {
+  border-color: var(--accent-color);
+  background: var(--accent-soft);
+  color: var(--accent-color);
+}
+
+.select {
+  padding: 4px 8px;
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-primary);
+  font-size: 0.6875rem;
+  font-weight: 600;
+}
+
+.iconGroup {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-left: auto;
+}
+
+.iconButton {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-primary);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.iconButton:hover:not(:disabled) {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.iconButton:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.spinning {
+  animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

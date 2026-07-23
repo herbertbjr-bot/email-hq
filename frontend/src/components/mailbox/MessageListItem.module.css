@@ -120,3 +120,54 @@
   border-radius: 50%;
   background: var(--accent-color);
 }
+
+.compact .snippet,
+.compact .aiRow {
+  display: none;
+}
+
+.compact {
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+.quickActions {
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 10px;
+  background: linear-gradient(to left, var(--accent-soft) 65%, transparent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.1s ease;
+}
+
+.item:hover .quickActions,
+.item:focus-within .quickActions {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.quickAction {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--radius-sm);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.quickAction:hover {
+  background: var(--bg-secondary);
+  color: var(--accent-color);
+}
+
+.quickActionActive {
+  color: var(--warning-color);
+}

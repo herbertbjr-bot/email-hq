@@ -9,6 +9,8 @@ import styles from "./ComposeModal.module.css";
 
 export interface ComposeInitialValues {
   to?: string;
+  cc?: string;
+  bcc?: string;
   subject?: string;
   body?: string;
   inReplyTo?: string;
@@ -26,7 +28,9 @@ export function ComposeModal({
   const { selectedAccountId } = useAccountContext();
   const { notify } = useToast();
   const [to, setTo] = useState(initialValues?.to ?? "");
-  const [cc, setCc] = useState("");
+  const [cc, setCc] = useState(initialValues?.cc ?? "");
+  const [bcc, setBcc] = useState(initialValues?.bcc ?? "");
+  const [showCcBcc, setShowCcBcc] = useState(Boolean(initialValues?.cc || initialValues?.bcc));
   const [subject, setSubject] = useState(initialValues?.subject ?? "");
   const [body, setBody] = useState(initialValues?.body ?? "");
   const [sending, setSending] = useState(false);
@@ -47,6 +51,7 @@ export function ComposeModal({
       await mailApi.send(selectedAccountId, {
         to: splitAddresses(to),
         cc: splitAddresses(cc),
+        bcc: splitAddresses(bcc),
         subject,
         body_text: body,
         in_reply_to: initialValues?.inReplyTo,
@@ -74,13 +79,28 @@ export function ComposeModal({
 
         <form onSubmit={handleSubmit} className={styles.form}>
           <label className={styles.field}>
-            <span>To</span>
+            <div className={styles.fieldHeader}>
+              <span>To</span>
+              {!showCcBcc && (
+                <button type="button" className={styles.ccBccToggle} onClick={() => setShowCcBcc(true)}>
+                  Add Cc/Bcc
+                </button>
+              )}
+            </div>
             <input required value={to} onChange={(e) => setTo(e.target.value)} placeholder="recipient@example.com" />
           </label>
-          <label className={styles.field}>
-            <span>Cc</span>
-            <input value={cc} onChange={(e) => setCc(e.target.value)} placeholder="optional" />
-          </label>
+          {showCcBcc && (
+            <>
+              <label className={styles.field}>
+                <span>Cc</span>
+                <input value={cc} onChange={(e) => setCc(e.target.value)} placeholder="optional" />
+              </label>
+              <label className={styles.field}>
+                <span>Bcc</span>
+                <input value={bcc} onChange={(e) => setBcc(e.target.value)} placeholder="optional" />
+              </label>
+            </>
+          )}
           <label className={styles.field}>
             <span>Subject</span>
             <input required value={subject} onChange={(e) => setSubject(e.target.value)} />

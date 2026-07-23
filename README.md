@@ -146,6 +146,57 @@ color. The sidebar's account switcher lists all configured accounts;
 selecting one scopes the folder list and message view to that mailbox.
 One account can be marked as the default (selected on load).
 
+## Mail
+
+The message list (`MailboxList` / `MailToolbar`) supports:
+
+- **Search** - a debounced search box that hits IMAP `SEARCH TEXT` server-side
+  (subject + from/to headers + body in one pass; see `_build_search_criteria`
+  in `backend/app/services/imap_service.py`), not a client-side filter.
+- **Filters** - Unread and Flagged chips, combinable with search and with
+  each other (`UNSEEN`/`FLAGGED` IMAP criteria, ANDed with the text search).
+- **Sort** - Newest/Oldest first. UID order is used as a cheap, reliable
+  proxy for date order (true on essentially every IMAP server) rather than
+  fetching every message's date - so it's fast even on large folders. Sorting
+  by subject/sender isn't implemented (would need fetching headers for every
+  matched message before paging, which is real added latency for a feature
+  that's rarely essential - text search covers most of the same need).
+- **Pagination** - "Load more" fetches the next page (30 at a time) and
+  appends rather than re-fetching everything.
+- **Density** - Comfortable/Compact list view, persisted to `localStorage`
+  (`emailhq.mail-view-preferences.v1`, same pattern as the dashboard layout
+  and icon-pack preferences).
+- **Quick actions** - hover a message in the list for inline flag/read/delete
+  toggles, no need to open it first.
+
+The message view (`MessageView`) adds a full action toolbar: **Reply**,
+**Reply All** (deduces the recipient list, excluding your own address),
+**Forward** (quotes the original with a forwarded-message header block),
+flag toggle, mark-unread, **Move to** any folder, and **Delete**
+(auto-detects a Trash-like folder to move to; permanently deletes only if
+already in Trash or none exists - `imap_service.delete_message`). All of
+these hit real IMAP operations (`COPY` + `STORE \Deleted` + `EXPUNGE` for
+move/delete - `UID MOVE` isn't universally supported, so this is the classic
+portable approach) rather than just updating local UI state.
+
+**HTML email rendering is sanitized in two independent layers** (see
+`frontend/src/utils/sanitizeHtml.ts` and `SafeHtmlEmail.tsx`):
+
+1. DOMPurify strips `<script>`, `<iframe>`, `<object>`, `<embed>`, `<form>`,
+   all event-handler attributes (`onerror`, `onclick`, ...), and
+   `javascript:`/`data:` URIs. Inline `style` attributes are kept (DOMPurify
+   sanitizes their CSS) so formatted emails don't render as plain text.
+   External links get `target="_blank" rel="noopener noreferrer"` injected.
+2. The sanitized result is rendered inside a **sandboxed iframe**
+   (`sandbox="allow-same-origin"`, deliberately *without* `allow-scripts`) -
+   so even a DOMPurify bypass couldn't execute script in this app's window.
+   `allow-same-origin` without `allow-scripts` is the safe half of that
+   pair; the classic sandbox-escape needs both together, and script
+   execution is impossible here regardless.
+
+Plain-text bodies are shown as-is when there's no HTML part; if neither is
+present, an empty state is shown instead of guessing.
+
 ## Dashboard
 
 The landing view is a customizable widget dashboard (`frontend/src/components/dashboard/`):

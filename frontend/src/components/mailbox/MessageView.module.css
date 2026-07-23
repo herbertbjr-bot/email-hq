@@ -7,6 +7,76 @@
   overflow-y: auto;
 }
 
+.toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.toolbarSpacer {
+  flex: 1;
+}
+
+.toolbarIcon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.toolbarIcon:hover:not(:disabled) {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.toolbarIconActive {
+  border-color: var(--warning-color);
+  color: var(--warning-color);
+  background: color-mix(in srgb, var(--warning-color) 12%, var(--bg-secondary));
+}
+
+.toolbarIconDanger {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+
+.toolbarIconDanger:hover:not(:disabled) {
+  border-color: var(--danger-color);
+  color: var(--danger-color);
+  background: color-mix(in srgb, var(--danger-color) 12%, var(--bg-secondary));
+}
+
+.toolbarIcon:disabled,
+.toolbarIconDanger:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.moveSelect {
+  padding: 7px 8px;
+  border-radius: var(--radius-sm);
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-secondary);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
 .header {
   display: flex;
   flex-direction: column;

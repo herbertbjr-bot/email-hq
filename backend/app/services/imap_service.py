@@ -34,6 +34,12 @@ _DISPLAY_NAME_OVERRIDES = {
     "ARCHIVE": "Archive",
 }
 
+# Folder names (case-insensitive) recognized as "trash" when Delete needs to
+# find (or recognize it's already in) a trash-like folder.
+_TRASH_NAMES = {"trash", "deleted items", "deleted messages", "bin", "junk"}
+
+SortOrder = str  # "date_desc" | "date_asc"
+
 
 class ImapError(Exception):
     pass
@@ -79,6 +85,40 @@ def _parse_folder_line(line: bytes) -> str | None:
         return name
     except Exception:
         return None
+
+
+def _quote_search_term(term: str) -> str:
+    """Quotes a string for use as an IMAP SEARCH literal, escaping backslashes and quotes."""
+    escaped = term.replace("\\", "\\\\").replace('"', '\\"')
+    return f'"{escaped}"'
+
+
+def _build_search_criteria(query: str | None, unread_only: bool, flagged_only: bool) -> list[str]:
+    """Builds an IMAP SEARCH criteria list. Criteria are implicitly ANDed by
+    the IMAP protocol when passed as separate tokens, so combining UNSEEN,
+    FLAGGED, and a TEXT search narrows on all of them at once."""
+    criteria: list[str] = []
+    if unread_only:
+        criteria.append("UNSEEN")
+    if flagged_only:
+        criteria.append("FLAGGED")
+    if query and query.strip():
+        # TEXT searches headers (subject, from, to) and the body in one pass -
+        # good enough for a single smart search box rather than separate
+        # subject/from/body fields.
+        criteria += ["TEXT", _quote_search_term(query.strip())]
+    return criteria or ["ALL"]
+
+
+def _find_folder(conn: imaplib.IMAP4, predicate) -> str | None:
+    status, folder_lines = conn.list()
+    if status != "OK":
+        return None
+    for line in folder_lines or []:
+        name = _parse_folder_line(line)
+        if name and predicate(name):
+            return name
+    return None
 
 
 def _sync_list_folders(account: EmailAccount) -> list[FolderOut]:
@@ -192,20 +232,34 @@ def _parse_message(uid: str, raw: bytes, flags: tuple[bytes, ...]) -> MessageDet
     )
 
 
-def _sync_list_messages(account: EmailAccount, folder: str, limit: int, offset: int) -> MessageListResponse:
+def _sync_list_messages(
+    account: EmailAccount,
+    folder: str,
+    limit: int,
+    offset: int,
+    query: str | None,
+    unread_only: bool,
+    flagged_only: bool,
+    sort: SortOrder,
+) -> MessageListResponse:
     conn = _connect(account)
     try:
         status, data = conn.select(f'"{folder}"', readonly=True)
         if status != "OK":
             raise ImapError(f"Could not open folder '{folder}'")
-        total = int(data[0])
 
-        status, search_data = conn.uid("search", None, "ALL")
+        criteria = _build_search_criteria(query, unread_only, flagged_only)
+        status, search_data = conn.uid("search", None, *criteria)
         if status != "OK":
             raise ImapError("IMAP search failed")
 
         all_uids = search_data[0].split()
-        all_uids.reverse()  # newest first (UIDs are monotonically increasing)
+        matched_total = len(all_uids)
+        # UIDs are monotonically increasing on essentially every IMAP server,
+        # so UID order is a reliable (and cheap - no extra round trip) proxy
+        # for date order without needing to fetch/parse dates for every match.
+        if sort != "date_asc":
+            all_uids.reverse()
         page_uids = all_uids[offset : offset + limit]
 
         messages: list[MessageSummary] = []
@@ -219,7 +273,7 @@ def _sync_list_messages(account: EmailAccount, folder: str, limit: int, offset: 
             detail = _parse_message(uid, raw, flags)
             messages.append(MessageSummary(**detail.model_dump(exclude={"body_text", "body_html", "attachments"})))
 
-        return MessageListResponse(folder=folder, total=total, messages=messages)
+        return MessageListResponse(folder=folder, total=matched_total, messages=messages)
     finally:
         try:
             conn.logout()
@@ -268,6 +322,56 @@ def _sync_set_flags(account: EmailAccount, folder: str, uid: str, is_read: bool 
             pass
 
 
+def _sync_move_message(account: EmailAccount, folder: str, uid: str, target_folder: str) -> None:
+    """Moves a message via the classic COPY + mark-deleted + EXPUNGE dance,
+    since UID MOVE (RFC 6851) isn't universally supported."""
+    conn = _connect(account)
+    try:
+        status, _ = conn.select(f'"{folder}"', readonly=False)
+        if status != "OK":
+            raise ImapError(f"Could not open folder '{folder}'")
+
+        status, _ = conn.uid("copy", uid, f'"{target_folder}"')
+        if status != "OK":
+            raise ImapError(f"Could not copy message to '{target_folder}'")
+
+        conn.uid("store", uid, "+FLAGS", "(\\Deleted)")
+        conn.expunge()
+    finally:
+        try:
+            conn.logout()
+        except Exception:
+            pass
+
+
+def _sync_delete_message(account: EmailAccount, folder: str, uid: str) -> None:
+    """Moves a message to Trash (auto-detected from the account's folder
+    list); if the message is already in a trash-like folder, or no
+    trash-like folder exists, it's permanently deleted (marked \\Deleted +
+    expunged) instead - matching how most webmail clients behave."""
+    conn = _connect(account)
+    try:
+        status, _ = conn.select(f'"{folder}"', readonly=False)
+        if status != "OK":
+            raise ImapError(f"Could not open folder '{folder}'")
+
+        already_in_trash = folder.strip().lower() in _TRASH_NAMES
+        trash_folder = None if already_in_trash else _find_folder(conn, lambda n: n.strip().lower() in _TRASH_NAMES)
+
+        if trash_folder:
+            status, _ = conn.uid("copy", uid, f'"{trash_folder}"')
+            if status != "OK":
+                raise ImapError(f"Could not move message to '{trash_folder}'")
+
+        conn.uid("store", uid, "+FLAGS", "(\\Deleted)")
+        conn.expunge()
+    finally:
+        try:
+            conn.logout()
+        except Exception:
+            pass
+
+
 def _sync_test_connection(account: EmailAccount) -> tuple[bool, str | None]:
     try:
         conn = _connect(account)
@@ -281,8 +385,19 @@ async def list_folders(account: EmailAccount) -> list[FolderOut]:
     return await asyncio.to_thread(_sync_list_folders, account)
 
 
-async def list_messages(account: EmailAccount, folder: str, limit: int = 50, offset: int = 0) -> MessageListResponse:
-    return await asyncio.to_thread(_sync_list_messages, account, folder, limit, offset)
+async def list_messages(
+    account: EmailAccount,
+    folder: str,
+    limit: int = 50,
+    offset: int = 0,
+    query: str | None = None,
+    unread_only: bool = False,
+    flagged_only: bool = False,
+    sort: SortOrder = "date_desc",
+) -> MessageListResponse:
+    return await asyncio.to_thread(
+        _sync_list_messages, account, folder, limit, offset, query, unread_only, flagged_only, sort
+    )
 
 
 async def get_message(account: EmailAccount, folder: str, uid: str) -> MessageDetail:
@@ -293,6 +408,14 @@ async def set_flags(
     account: EmailAccount, folder: str, uid: str, is_read: bool | None = None, is_flagged: bool | None = None
 ) -> None:
     await asyncio.to_thread(_sync_set_flags, account, folder, uid, is_read, is_flagged)
+
+
+async def move_message(account: EmailAccount, folder: str, uid: str, target_folder: str) -> None:
+    await asyncio.to_thread(_sync_move_message, account, folder, uid, target_folder)
+
+
+async def delete_message(account: EmailAccount, folder: str, uid: str) -> None:
+    await asyncio.to_thread(_sync_delete_message, account, folder, uid)
 
 
 async def test_connection(account: EmailAccount) -> tuple[bool, str | None]:

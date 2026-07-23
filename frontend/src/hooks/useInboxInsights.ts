@@ -30,7 +30,7 @@ export function useInboxInsights(accountId: string | null, limit = 8) {
     setError(null);
 
     mailApi
-      .messages(accountId, "INBOX", limit, 0)
+      .messages(accountId, "INBOX", { limit, offset: 0 })
       .then(async (res) => {
         const enriched = await Promise.all(
           res.messages.map(async (message): Promise<InsightMessage> => {

@@ -22,6 +22,9 @@ function AppShell() {
   const [showCompose, setShowCompose] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [showAssistant, setShowAssistant] = useState(false);
+  const [mailRefreshToken, setMailRefreshToken] = useState(0);
+
+  const bumpMailRefresh = () => setMailRefreshToken((t) => t + 1);
 
   const openCompose = (values?: ComposeInitialValues) => {
     setComposeValues(values ?? null);
@@ -62,8 +65,21 @@ function AppShell() {
           <DashboardView onOpenMail={openMailForAccount} onOpenMessage={openMessage} />
         ) : (
           <>
-            <MailboxList key={selectedFolder} selectedUid={selectedUid} onSelect={setSelectedUid} />
-            <MessageView uid={selectedUid} onOpenAssistant={() => setShowAssistant(true)} />
+            <MailboxList
+              key={selectedFolder}
+              selectedUid={selectedUid}
+              onSelect={setSelectedUid}
+              refreshToken={mailRefreshToken}
+            />
+            <MessageView
+              uid={selectedUid}
+              onOpenAssistant={() => setShowAssistant(true)}
+              onCompose={openCompose}
+              onMessageRemoved={() => {
+                setSelectedUid(null);
+                bumpMailRefresh();
+              }}
+            />
           </>
         )}
 
@@ -71,7 +87,10 @@ function AppShell() {
           <ComposeModal
             initialValues={composeValues ?? undefined}
             onClose={() => setShowCompose(false)}
-            onSent={() => setShowCompose(false)}
+            onSent={() => {
+              setShowCompose(false);
+              bumpMailRefresh();
+            }}
           />
         )}
 

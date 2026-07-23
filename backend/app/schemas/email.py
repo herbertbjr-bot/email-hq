@@ -55,3 +55,7 @@ class SendMessageRequest(BaseModel):
 class MessageFlagUpdate(BaseModel):
     is_read: bool | None = None
     is_flagged: bool | None = None
+
+
+class MessageMoveRequest(BaseModel):
+    target_folder: str = Field(min_length=1)

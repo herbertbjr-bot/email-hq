@@ -1,3 +1,5 @@
+from typing import Literal
+
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from app.api.deps import get_account_or_404
@@ -7,6 +9,7 @@ from app.schemas.email import (
     MessageDetail,
     MessageFlagUpdate,
     MessageListResponse,
+    MessageMoveRequest,
     SendMessageRequest,
 )
 from app.services import imap_service, smtp_service
@@ -30,9 +33,22 @@ async def list_messages(
     account: EmailAccount = Depends(get_account_or_404),
     limit: int = Query(default=50, ge=1, le=200),
     offset: int = Query(default=0, ge=0),
+    q: str | None = Query(default=None, max_length=200, description="Full-text search (subject/from/body)"),
+    unread_only: bool = Query(default=False),
+    flagged_only: bool = Query(default=False),
+    sort: Literal["date_desc", "date_asc"] = Query(default="date_desc"),
 ) -> MessageListResponse:
     try:
-        return await imap_service.list_messages(account, folder, limit=limit, offset=offset)
+        return await imap_service.list_messages(
+            account,
+            folder,
+            limit=limit,
+            offset=offset,
+            query=q,
+            unread_only=unread_only,
+            flagged_only=flagged_only,
+            sort=sort,
+        )
     except ImapError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
@@ -56,6 +72,31 @@ async def update_flags(
 ) -> None:
     try:
         await imap_service.set_flags(account, folder, uid, is_read=payload.is_read, is_flagged=payload.is_flagged)
+    except ImapError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+
+@router.post("/folders/{folder}/messages/{uid}/move", status_code=status.HTTP_204_NO_CONTENT)
+async def move_message(
+    folder: str,
+    uid: str,
+    payload: MessageMoveRequest,
+    account: EmailAccount = Depends(get_account_or_404),
+) -> None:
+    try:
+        await imap_service.move_message(account, folder, uid, payload.target_folder)
+    except ImapError as exc:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
+
+
+@router.delete("/folders/{folder}/messages/{uid}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_message(
+    folder: str,
+    uid: str,
+    account: EmailAccount = Depends(get_account_or_404),
+) -> None:
+    try:
+        await imap_service.delete_message(account, folder, uid)
     except ImapError as exc:
         raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=str(exc)) from exc
 
