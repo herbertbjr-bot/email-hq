@@ -96,17 +96,32 @@ migrations automatically.
 
 ## Adding an account
 
-Use the "+" button next to **Accounts** in the sidebar. Most providers
-require an app-specific password (not your normal login password) for IMAP/SMTP:
+Use the "+" button next to **Accounts** in the sidebar. The **Quick connect**
+row in the form (`frontend/src/components/accounts/providerPresets.ts`)
+one-click-fills IMAP/SMTP host and port for Gmail, Outlook/Microsoft 365,
+Yahoo Mail, AOL Mail, and iCloud Mail - pick a provider, and the username
+fields auto-fill from the email address too. All presets use STARTTLS on
+port 587 for SMTP to match what the backend supports.
 
-- **Gmail**: enable 2FA, then create an [app password](https://myaccount.google.com/apppasswords).
-  IMAP: `imap.gmail.com:993` (SSL). SMTP: `smtp.gmail.com:587` (STARTTLS).
-- **Outlook/Office365**: IMAP `outlook.office365.com:993`, SMTP `smtp.office365.com:587`.
-- **iCloud**: generate an app-specific password. IMAP `imap.mail.me.com:993`, SMTP `smtp.mail.me.com:587`.
+Most providers require an app-specific password (not your normal login
+password) once you have their host/port filled in - the form shows a hint
+and a link to the provider's app-password page after you pick one. For
+providers not in the quick-connect list, fill in the IMAP/SMTP fields
+manually - your provider's help docs will have the host/port/security
+settings.
 
 Credentials are encrypted at rest with Fernet (`CREDENTIAL_ENCRYPTION_KEY`)
 and are only decrypted in-memory for the duration of a single IMAP/SMTP
 connection - see `backend/app/core/security.py`.
+
+## Deleting an account
+
+Hover an account in the sidebar and click the trash icon that appears -
+this opens a confirmation dialog (`frontend/src/components/common/ConfirmDialog.tsx`)
+showing exactly what will be removed. Nothing is deleted until you click
+**Delete account** in that dialog; **Cancel** aborts with no changes. This
+two-step flow is deliberate - account deletion also removes the encrypted
+IMAP/SMTP credentials, and there's no undo.
 
 ## Multi-account profiles
 

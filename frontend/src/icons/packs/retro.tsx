@@ -136,4 +136,12 @@ export const retroPack: IconPack = {
       <path d="M12 2v4M12 18v4M2 12h4M18 12h4M5 5l2.8 2.8M16.2 16.2 19 19M19 5l-2.8 2.8M7.8 16.2 5 19" />
     </svg>
   ),
+  trash: (props) => (
+    <svg {...base(props)}>
+      <path d="M4 7h16" />
+      <rect x="9" y="3.5" width="6" height="3.5" />
+      <path d="M6 7l1.2 13h9.6L18 7" />
+      <path d="M10 11v6M14 11v6" />
+    </svg>
+  ),
 };

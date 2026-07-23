@@ -126,4 +126,9 @@ export const minimalPack: IconPack = {
       <circle cx="12" cy="12" r="8" strokeDasharray="2 3" />
     </svg>
   ),
+  trash: (props) => (
+    <svg {...base(props)}>
+      <path d="M5 7h14M8 7V5h8v2M7 7l1 13h8l1-13" />
+    </svg>
+  ),
 };

@@ -6,6 +6,8 @@ import { Icon } from "../../icons/IconRegistry";
 import type { AccountProfile, EmailAccountFormValues } from "../../types";
 import { Button } from "../common/Button";
 import styles from "./AccountForm.module.css";
+import type { ProviderPreset } from "./providerPresets";
+import { PROVIDER_PRESETS } from "./providerPresets";
 
 const DEFAULT_VALUES: EmailAccountFormValues = {
   label: "",
@@ -30,9 +32,27 @@ export function AccountForm({ onClose, onSaved }: { onClose: () => void; onSaved
   const [values, setValues] = useState<EmailAccountFormValues>(DEFAULT_VALUES);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [selectedProviderId, setSelectedProviderId] = useState<string | null>(null);
 
   const update = <K extends keyof EmailAccountFormValues>(key: K, value: EmailAccountFormValues[K]) =>
     setValues((prev) => ({ ...prev, [key]: value }));
+
+  const applyProvider = (preset: ProviderPreset) => {
+    setSelectedProviderId(preset.id);
+    setValues((prev) => ({
+      ...prev,
+      imap_host: preset.imapHost,
+      imap_port: preset.imapPort,
+      imap_use_ssl: true,
+      imap_username: prev.imap_username || prev.email_address,
+      smtp_host: preset.smtpHost,
+      smtp_port: preset.smtpPort,
+      smtp_use_tls: true,
+      smtp_username: prev.smtp_username || prev.email_address,
+    }));
+  };
+
+  const selectedProvider = PROVIDER_PRESETS.find((p) => p.id === selectedProviderId) ?? null;
 
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
@@ -89,10 +109,48 @@ export function AccountForm({ onClose, onSaved }: { onClose: () => void; onSaved
                 required
                 type="email"
                 value={values.email_address}
-                onChange={(e) => update("email_address", e.target.value)}
+                onChange={(e) => {
+                  const email = e.target.value;
+                  setValues((prev) => ({
+                    ...prev,
+                    email_address: email,
+                    imap_username: prev.imap_username === prev.email_address ? email : prev.imap_username,
+                    smtp_username: prev.smtp_username === prev.email_address ? email : prev.smtp_username,
+                  }));
+                }}
                 placeholder="you@example.com"
               />
             </label>
+
+            <div className={`${styles.fieldWide} ${styles.providerRow}`}>
+              <span className={styles.providerLabel}>Quick connect</span>
+              <div className={styles.providerButtons}>
+                {PROVIDER_PRESETS.map((preset) => (
+                  <button
+                    key={preset.id}
+                    type="button"
+                    className={`${styles.providerButton} ${selectedProviderId === preset.id ? styles.providerButtonActive : ""}`}
+                    onClick={() => applyProvider(preset)}
+                  >
+                    {preset.name}
+                  </button>
+                ))}
+              </div>
+              {selectedProvider && (
+                <p className={styles.providerHint}>
+                  {selectedProvider.hint}
+                  {selectedProvider.helpUrl && (
+                    <>
+                      {" "}
+                      <a href={selectedProvider.helpUrl} target="_blank" rel="noopener noreferrer">
+                        Manage app passwords
+                      </a>
+                      .
+                    </>
+                  )}
+                </p>
+              )}
+            </div>
 
             <div className={styles.sectionLabel}>IMAP (incoming)</div>
             <label className={styles.field}>

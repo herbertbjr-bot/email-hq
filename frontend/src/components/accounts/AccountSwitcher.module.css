@@ -52,13 +52,7 @@
   width: 100%;
   display: flex;
   align-items: center;
-  gap: 8px;
-  padding: 8px;
-  border: none;
-  background: transparent;
   border-radius: var(--radius-sm);
-  cursor: pointer;
-  text-align: left;
 }
 
 .item:hover {
@@ -67,6 +61,46 @@
 
 .itemActive {
   background: var(--accent-soft);
+}
+
+.itemMain {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.deleteButton {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 26px;
+  height: 26px;
+  margin-right: 4px;
+  border: none;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  opacity: 0;
+  transition: opacity 0.1s ease;
+}
+
+.item:hover .deleteButton,
+.item:focus-within .deleteButton {
+  opacity: 1;
+}
+
+.deleteButton:hover {
+  background: color-mix(in srgb, var(--danger-color) 14%, transparent);
+  color: var(--danger-color);
 }
 
 .dot {

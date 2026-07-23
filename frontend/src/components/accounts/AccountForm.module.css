@@ -108,6 +108,62 @@
   outline-offset: -1px;
 }
 
+.providerRow {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 12px;
+  border-radius: var(--radius-md);
+  background: var(--bg-primary);
+}
+
+.providerLabel {
+  font-size: 0.6875rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-secondary);
+}
+
+.providerButtons {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.providerButton {
+  padding: 6px 12px;
+  border-radius: 999px;
+  border: var(--border-width) solid var(--border-color);
+  background: var(--bg-secondary);
+  color: var(--text-primary);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.providerButton:hover {
+  border-color: var(--accent-color);
+  color: var(--accent-color);
+}
+
+.providerButtonActive {
+  border-color: var(--accent-color);
+  background: var(--accent-soft);
+  color: var(--accent-color);
+}
+
+.providerHint {
+  margin: 0;
+  font-size: 0.75rem;
+  color: var(--text-secondary);
+  line-height: 1.5;
+}
+
+.providerHint a {
+  color: var(--accent-color);
+}
+
 .sectionLabel {
   grid-column: 1 / -1;
   font-size: 0.6875rem;
