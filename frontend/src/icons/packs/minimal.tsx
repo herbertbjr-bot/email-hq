@@ -131,4 +131,19 @@ export const minimalPack: IconPack = {
       <path d="M5 7h14M8 7V5h8v2M7 7l1 13h8l1-13" />
     </svg>
   ),
+  calendar: (props) => (
+    <svg {...base(props)}>
+      <rect x="4" y="5" width="16" height="15" rx="1" />
+      <path d="M4 9.5h16" />
+      <path d="M8 3.5v3M16 3.5v3" />
+    </svg>
+  ),
+  checklist: (props) => (
+    <svg {...base(props)}>
+      <rect x="4" y="4.5" width="7" height="7" rx="1" />
+      <path d="M13.5 7h6.5" />
+      <rect x="4" y="13.5" width="7" height="7" rx="1" />
+      <path d="M13.5 17h6.5" />
+    </svg>
+  ),
 };

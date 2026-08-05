@@ -3,7 +3,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.routes import accounts, ai, mailbox
+from app.api.routes import accounts, ai, calendar, mailbox, tasks
 from app.config import get_settings
 from app.db.database import init_db
 
@@ -34,6 +34,8 @@ app.add_middleware(
 app.include_router(accounts.router, prefix=settings.api_v1_prefix)
 app.include_router(mailbox.router, prefix=settings.api_v1_prefix)
 app.include_router(ai.router, prefix=settings.api_v1_prefix)
+app.include_router(tasks.router, prefix=settings.api_v1_prefix)
+app.include_router(calendar.router, prefix=settings.api_v1_prefix)
 
 
 @app.get("/health", tags=["health"])

@@ -144,4 +144,20 @@ export const retroPack: IconPack = {
       <path d="M10 11v6M14 11v6" />
     </svg>
   ),
+  calendar: (props) => (
+    <svg {...base(props)}>
+      <rect x="3.5" y="5.5" width="17" height="15" />
+      <path d="M3.5 10h17" />
+      <path d="M8 3v3.5M16 3v3.5" />
+    </svg>
+  ),
+  checklist: (props) => (
+    <svg {...base(props)}>
+      <rect x="3.5" y="4" width="7" height="7" />
+      <path d="M5 7.3l1.2 1.2 2-2.4" />
+      <path d="M13.5 6.5h7" />
+      <rect x="3.5" y="13.5" width="7" height="7" />
+      <path d="M13.5 17h7" />
+    </svg>
+  ),
 };

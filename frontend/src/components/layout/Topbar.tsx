@@ -7,6 +7,12 @@ import { ThemeToggle } from "../common/ThemeToggle";
 import type { View } from "./Sidebar";
 import styles from "./Topbar.module.css";
 
+const VIEW_TITLES: Record<Exclude<View, "mail">, string> = {
+  dashboard: "Dashboard",
+  calendar: "Calendar",
+  tasks: "Tasks",
+};
+
 export function Topbar({
   view,
   onCompose,
@@ -26,7 +32,7 @@ export function Topbar({
       .catch(() => setAiEnabled(null));
   }, []);
 
-  const title = view === "dashboard" ? "Dashboard" : selectedFolder || "Inbox";
+  const title = view === "mail" ? selectedFolder || "Inbox" : VIEW_TITLES[view];
 
   return (
     <header className={styles.topbar}>

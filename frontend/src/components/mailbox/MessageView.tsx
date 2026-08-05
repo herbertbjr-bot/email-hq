@@ -2,12 +2,15 @@ import { useEffect, useMemo, useState } from "react";
 import { aiApi } from "../../api/ai";
 import { mailApi } from "../../api/mail";
 import { useAccountContext } from "../../context/AccountContext";
+import { useCalendarContext } from "../../context/CalendarContext";
+import { useTaskContext } from "../../context/TaskContext";
 import { useToast } from "../../context/ToastContext";
 import { useFolders } from "../../hooks/useFolders";
 import { Icon } from "../../icons/IconRegistry";
 import type { MessageDetail, PriorityLevel } from "../../types";
 import { PriorityIndicator } from "../ai/PriorityIndicator";
 import { SmartTagList } from "../ai/SmartTagBadge";
+import { ScheduleEventModal } from "../calendar/ScheduleEventModal";
 import { Button } from "../common/Button";
 import { EmptyState } from "../common/EmptyState";
 import { Spinner } from "../common/Spinner";
@@ -44,6 +47,8 @@ export function MessageView({
   const { selectedAccountId, selectedFolder, selectedAccount } = useAccountContext();
   const { folders } = useFolders(selectedAccountId);
   const { notify } = useToast();
+  const { createTask, findLinkedTask } = useTaskContext();
+  const { findLinkedEvent } = useCalendarContext();
   const [message, setMessage] = useState<MessageDetail | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -51,6 +56,7 @@ export function MessageView({
   const [aiPriority, setAiPriority] = useState<PriorityLevel | null>(null);
   const [busy, setBusy] = useState(false);
   const [moveTarget, setMoveTarget] = useState("");
+  const [showScheduleModal, setShowScheduleModal] = useState(false);
 
   useEffect(() => {
     if (!selectedAccountId || !uid) {
@@ -201,6 +207,41 @@ export function MessageView({
     }
   };
 
+  const linkedEvent = selectedAccountId ? findLinkedEvent(selectedAccountId, selectedFolder, message.uid) : undefined;
+
+  const handleSchedule = () => {
+    if (linkedEvent) {
+      notify("Already added to Calendar", "info");
+      return;
+    }
+    setShowScheduleModal(true);
+  };
+
+  const linkedTask = selectedAccountId ? findLinkedTask(selectedAccountId, selectedFolder, message.uid) : undefined;
+
+  const handleCreateTask = async () => {
+    if (!selectedAccountId) return;
+    if (linkedTask) {
+      notify("Already added to Tasks", "info");
+      return;
+    }
+    setBusy(true);
+    try {
+      await createTask({
+        title: message.subject || "(no subject)",
+        source_account_id: selectedAccountId,
+        source_folder: selectedFolder,
+        source_uid: message.uid,
+        source_subject: message.subject,
+      });
+      notify("Added to Tasks", "success");
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "Failed to create task", "error");
+    } finally {
+      setBusy(false);
+    }
+  };
+
   const handleMove = async (targetFolder: string) => {
     if (!selectedAccountId || !targetFolder) return;
     setBusy(true);
@@ -227,6 +268,14 @@ export function MessageView({
         <Button variant="secondary" onClick={handleForward} disabled={busy}>
           <Icon name="send" size={14} />
           Forward
+        </Button>
+        <Button variant="secondary" onClick={handleSchedule} disabled={busy || !!linkedEvent}>
+          <Icon name={linkedEvent ? "check" : "calendar"} size={14} />
+          {linkedEvent ? "Added" : "Schedule"}
+        </Button>
+        <Button variant="secondary" onClick={handleCreateTask} disabled={busy || !!linkedTask}>
+          <Icon name={linkedTask ? "check" : "checklist"} size={14} />
+          {linkedTask ? "Added" : "Task"}
         </Button>
         <span className={styles.toolbarSpacer} />
         <button
@@ -262,6 +311,26 @@ export function MessageView({
           <Icon name="trash" size={16} />
         </button>
       </div>
+
+      {linkedEvent && (
+        <div className={styles.linkedNote}>
+          <Icon name="calendar" size={13} />
+          Linked to event "{linkedEvent.title}" ·{" "}
+          {new Date(linkedEvent.start_at).toLocaleString(undefined, {
+            month: "short",
+            day: "numeric",
+            hour: "numeric",
+            minute: "2-digit",
+          })}
+        </div>
+      )}
+
+      {linkedTask && (
+        <div className={styles.linkedNote}>
+          <Icon name="checklist" size={13} />
+          Linked to task "{linkedTask.title}"{linkedTask.due_date ? ` · due ${linkedTask.due_date}` : ""}
+        </div>
+      )}
 
       <div className={styles.header}>
         <h2 className={styles.subject}>{message.subject}</h2>
@@ -301,6 +370,17 @@ export function MessageView({
         <Icon name="sparkles" size={15} />
         Open AI Assistant for quick replies
       </Button>
+
+      {showScheduleModal && (
+        <ScheduleEventModal
+          initialTitle={message.subject}
+          sourceAccountId={selectedAccountId}
+          sourceFolder={selectedFolder}
+          sourceUid={message.uid}
+          sourceSubject={message.subject}
+          onClose={() => setShowScheduleModal(false)}
+        />
+      )}
     </div>
   );
 }

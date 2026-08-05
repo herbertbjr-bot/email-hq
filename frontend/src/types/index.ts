@@ -88,3 +88,32 @@ export interface QuickReplySuggestion {
   label: string;
   body: string;
 }
+
+export interface Task {
+  id: string;
+  title: string;
+  notes: string | null;
+  due_date: string | null;
+  is_done: boolean;
+  source_account_id: string | null;
+  source_folder: string | null;
+  source_uid: string | null;
+  source_subject: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  title: string;
+  notes: string | null;
+  start_at: string;
+  end_at: string;
+  all_day: boolean;
+  source_account_id: string | null;
+  source_folder: string | null;
+  source_uid: string | null;
+  source_subject: string | null;
+  created_at: string;
+  updated_at: string;
+}

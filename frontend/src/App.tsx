@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { AIAssistantDrawer } from "./components/ai/AIAssistantDrawer";
+import { CalendarView } from "./components/calendar/CalendarView";
 import { DashboardView } from "./components/dashboard/DashboardView";
 import { DashboardLayout } from "./components/layout/DashboardLayout";
 import type { View } from "./components/layout/Sidebar";
@@ -8,7 +9,10 @@ import type { ComposeInitialValues } from "./components/mailbox/ComposeModal";
 import { MailboxList } from "./components/mailbox/MailboxList";
 import { MessageView } from "./components/mailbox/MessageView";
 import { SettingsPanel } from "./components/settings/SettingsPanel";
+import { TasksView } from "./components/tasks/TasksView";
 import { AccountProvider, useAccountContext } from "./context/AccountContext";
+import { CalendarProvider } from "./context/CalendarContext";
+import { TaskProvider } from "./context/TaskContext";
 import { ToastProvider } from "./context/ToastContext";
 import { IconPackProvider } from "./icons/IconRegistry";
 import { ThemeProvider } from "./theme/ThemeProvider";
@@ -62,9 +66,9 @@ function AppShell() {
         onOpenSettings={() => setShowSettings(true)}
         onOpenAssistant={() => setShowAssistant(true)}
       >
-        {view === "dashboard" ? (
-          <DashboardView onOpenMail={openMailForAccount} onOpenMessage={openMessage} />
-        ) : (
+        {view === "dashboard" && <DashboardView onOpenMail={openMailForAccount} onOpenMessage={openMessage} />}
+
+        {view === "mail" && (
           <>
             <MailboxList
               key={selectedFolder}
@@ -83,6 +87,10 @@ function AppShell() {
             />
           </>
         )}
+
+        {view === "calendar" && <CalendarView onOpenMessage={openMessage} />}
+
+        {view === "tasks" && <TasksView onOpenMessage={openMessage} />}
 
         {showCompose && (
           <ComposeModal
@@ -114,7 +122,11 @@ export default function App() {
       <IconPackProvider>
         <AccountProvider>
           <ToastProvider>
-            <AppShell />
+            <TaskProvider>
+              <CalendarProvider>
+                <AppShell />
+              </CalendarProvider>
+            </TaskProvider>
           </ToastProvider>
         </AccountProvider>
       </IconPackProvider>

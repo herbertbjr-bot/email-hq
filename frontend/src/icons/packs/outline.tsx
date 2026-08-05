@@ -135,6 +135,23 @@ export const outlinePack: IconPack = {
       <path d="M19.4 13a7.6 7.6 0 0 0 .1-2l2-1.6-2-3.4-2.4 1a7.7 7.7 0 0 0-1.7-1L15 3h-4l-.4 2.5a7.7 7.7 0 0 0-1.7 1l-2.4-1-2 3.4L6.5 11a7.6 7.6 0 0 0 0 2l-2 1.6 2 3.4 2.4-1a7.7 7.7 0 0 0 1.7 1L11 21h4l.4-2.5a7.7 7.7 0 0 0 1.7-1l2.4 1 2-3.4-2.1-1.6Z" />
     </svg>
   ),
+  calendar: (props) => (
+    <svg {...base(props)}>
+      <rect x="3" y="4.5" width="18" height="16" rx="2.5" />
+      <path d="M3 9.5h18" />
+      <path d="M8 3v3" />
+      <path d="M16 3v3" />
+    </svg>
+  ),
+  checklist: (props) => (
+    <svg {...base(props)}>
+      <rect x="3.5" y="4" width="7" height="7" rx="1.6" />
+      <path d="m5.2 7.5 1.3 1.3 2.2-2.6" />
+      <path d="M13.5 6h7" />
+      <rect x="3.5" y="13.5" width="7" height="7" rx="1.6" />
+      <path d="M13.5 17h7" />
+    </svg>
+  ),
   trash: (props) => (
     <svg {...base(props)}>
       <path d="M4 7h16" />
