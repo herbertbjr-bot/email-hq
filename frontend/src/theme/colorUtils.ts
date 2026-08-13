@@ -35,6 +35,12 @@ export function isValidHex(hex: string): boolean {
   return parseHex(hex) !== null;
 }
 
+/** "r, g, b" ready to drop into an rgba(...) string - falls back to a neutral gray if hex is malformed. */
+export function hexToRgbTriplet(hex: string): string {
+  const rgb = parseHex(hex);
+  return rgb ? rgb.join(", ") : "20, 20, 20";
+}
+
 export function darken(hex: string, amount = 0.15): string {
   return mix(hex, -amount);
 }

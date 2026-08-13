@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ChangeEvent } from "react";
+import { useToast } from "../../context/ToastContext";
 import { Icon, ICON_PACK_META, useIconPack } from "../../icons/IconRegistry";
 import type { IconName } from "../../icons/types";
 import { useTheme } from "../../theme/ThemeProvider";
@@ -9,6 +10,7 @@ import { ContrastBadge } from "./ContrastBadge";
 import styles from "./SettingsPanel.module.css";
 
 const PREVIEW_ICONS: IconName[] = ["inbox", "sparkles", "star", "pencil", "settings"];
+const MAX_BACKGROUND_BYTES = 3 * 1024 * 1024;
 
 function ThemeSwatch({
   name,
@@ -61,11 +63,26 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
     fontScaleRange,
     customCSS,
     setCustomCSS,
+    backgroundImage,
+    setBackgroundImage,
+    backgroundDim,
+    setBackgroundDim,
+    backgroundDimRange,
     availableThemes,
     resetToDefaults,
+    exportTheme,
+    importTheme,
   } = useTheme();
   const { pack, setPack } = useIconPack();
+  const { notify } = useToast();
   const [cssDraft, setCssDraft] = useState(customCSS);
+
+  // Keeps the textarea in sync when customCSS changes from elsewhere (Reset,
+  // or an imported theme file) rather than only from this panel's own Apply
+  // button - otherwise the draft would silently show stale text.
+  useEffect(() => {
+    setCssDraft(customCSS);
+  }, [customCSS]);
 
   const effectiveAccent = accentOverride ?? resolvedTheme.tokens.accentColor;
 
@@ -77,6 +94,38 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
   const handleClearCustomCSS = () => {
     setCssDraft("");
     setCustomCSS("");
+  };
+
+  const handleBackgroundFile = (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    if (!file.type.startsWith("image/")) {
+      notify("Please choose an image file", "error");
+      return;
+    }
+    if (file.size > MAX_BACKGROUND_BYTES) {
+      notify("That image is too large - please use one under 3MB", "error");
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      if (typeof reader.result === "string") setBackgroundImage(reader.result);
+    };
+    reader.onerror = () => notify("Couldn't read that image", "error");
+    reader.readAsDataURL(file);
+  };
+
+  const handleImportTheme = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    event.target.value = "";
+    if (!file) return;
+    try {
+      await importTheme(file);
+      notify("Theme imported", "success");
+    } catch (err) {
+      notify(err instanceof Error ? err.message : "Couldn't import that file", "error");
+    }
   };
 
   return (
@@ -170,6 +219,41 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
           </section>
 
           <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>Background image</h3>
+            <p className={styles.hint}>
+              Shows behind the app, dimmed so text stays readable. Stored only in this browser - nothing is uploaded
+              anywhere.
+            </p>
+            {backgroundImage ? (
+              <div className={styles.backgroundRow}>
+                <img src={backgroundImage} alt="" className={styles.backgroundThumb} />
+                <div className={styles.backgroundControls}>
+                  <label className={styles.dimLabel}>
+                    <span>Dim</span>
+                    <input
+                      type="range"
+                      min={backgroundDimRange.min}
+                      max={backgroundDimRange.max}
+                      step={0.05}
+                      value={backgroundDim}
+                      onChange={(e) => setBackgroundDim(Number(e.target.value))}
+                    />
+                  </label>
+                  <Button variant="ghost" onClick={() => setBackgroundImage(null)}>
+                    Remove
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <label className={styles.uploadButton}>
+                <input type="file" accept="image/*" onChange={handleBackgroundFile} hidden />
+                <Icon name="plus" size={14} />
+                Upload image
+              </label>
+            )}
+          </section>
+
+          <section className={styles.section}>
             <h3 className={styles.sectionTitle}>Font scale</h3>
             <div className={styles.fontScaleRow}>
               <input
@@ -206,6 +290,25 @@ export function SettingsPanel({ onClose }: { onClose: () => void }) {
               <Button onClick={handleApplyCustomCSS} disabled={cssDraft === customCSS}>
                 Apply CSS
               </Button>
+            </div>
+          </section>
+
+          <section className={styles.section}>
+            <h3 className={styles.sectionTitle}>Import / export theme</h3>
+            <p className={styles.hint}>
+              Save your current skin, accent, background, and custom CSS as a file to back up or share - or load one
+              someone sent you.
+            </p>
+            <div className={styles.themeFileActions}>
+              <Button variant="secondary" onClick={exportTheme}>
+                <Icon name="chevronDown" size={14} />
+                Export as file
+              </Button>
+              <label className={styles.uploadButton}>
+                <input type="file" accept="application/json" onChange={handleImportTheme} hidden />
+                <Icon name="plus" size={14} />
+                Import from file
+              </label>
             </div>
           </section>
         </div>
